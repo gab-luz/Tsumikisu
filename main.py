@@ -92,6 +92,11 @@ def main():
 
         app.add_window(AppLauncher(widget_config))
 
+    if module_options.get("cheatsheet", {}).get("enabled", False):
+        from modules.cheatsheet import CheatsheetOverlay
+
+        app.add_window(CheatsheetOverlay(widget_config))
+
     if module_options.get("dock", {}).get("enabled", False):
         from modules.dock import Dock
 

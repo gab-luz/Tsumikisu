@@ -446,6 +446,13 @@ DEFAULT_CONFIG = {
             "anchor": "bottom-right",
             "layer": "bottom",
         },
+        "cheatsheet": {
+            "enabled": False,
+            "anchor": "center",
+            "layer": "top",
+            "transition_type": "crossfade",
+            "transition_duration": 350,
+        },
     },
     "general": {
         "check_updates": False,

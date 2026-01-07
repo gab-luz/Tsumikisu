@@ -230,6 +230,25 @@ exec --no-startup-id bash -c "sleep 3 && ~/.config/tsumikisu/init.sh -start"
 
 Adjust the path if you keep the repo elsewhere.
 
+### i3 integration and shortcuts
+
+Running `./init.sh -setup` on a system with `i3` now writes `~/.config/i3/tsumikisu.conf` (based on `configs/i3/tsumikisu.conf`) and injects an `include` into `~/.config/i3/config` so the shell autostarts with your workspace manager. The snippet pins workspaces 1‑9 to `$primary_output`/`$secondary_output` (adjust those names with `xrandr`) to keep the layout sane on dual‑monitor rigs.
+
+Keybindings provided by the template:
+
+| Shortcut | Action |
+| --- | --- |
+| `Super + Space` | Toggles the built‑in App Launcher via `scripts/tsumikisu-launcher.py`, which calls the D‑Bus `toggle-window` action on the running shell. |
+| `Super + Q` | Kills the currently focused window. |
+| `Super + 1…9` | Switches to workspaces 1‑9 while respecting the output assignments. |
+| `Super + C` | Launches Visual Studio Code. |
+| `Super + T` | Launches the Kitty terminal the shell already ships with. |
+| `Alt + F1` | Runs `scripts/tsumikisu-hotkeys.sh`, which now toggles the Fabric-powered cheatsheet overlay that lists these shortcuts. |
+
+If you keep your repo somewhere other than `~/.config/tsumikisu`, edit the template at `configs/i3/tsumikisu.conf` so `$tsumikisu_dir`, `$launcher_cmd`, and `$hotkeys_cmd` point at your install location. After that the installer will keep replacing the snippet with the correct paths whenever you re-run `init.sh -setup`.
+
+The cheatsheet overlay is powered by `modules.cheatsheet`; make sure that module is enabled in your config (the example config already sets `"modules":{"cheatsheet":{"enabled":true}}`) so `Alt + F1` always finds an active window to toggle.
+
 ## Updating
 
 Updating to latest commit is fairly simple, just git pull the latest changes.

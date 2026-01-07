@@ -271,6 +271,48 @@ install_packages() {
 	log_success "🎉 System packages installed successfully."
 }
 
+install_i3_config() {
+	if ! command -v i3 >/dev/null 2>&1; then
+		log_info "ℹ️  i3 not available; skipping the helper config."
+		return
+	fi
+
+	local i3_config_dir="$HOME/.config/i3"
+	mkdir -p "$i3_config_dir"
+	local target_conf
+	target_conf=$(realpath -m "$i3_config_dir/tsumikisu.conf")
+	local template="$INSTALL_DIR/configs/i3/tsumikisu.conf"
+
+	log_info "🧩 Writing the Tsumikisu i3 helper config..."
+
+	python3 - "$INSTALL_DIR" "$target_conf" <<PY
+import sys
+from pathlib import Path
+
+install_dir = Path(sys.argv[1]).expanduser()
+target = Path(sys.argv[2]).expanduser()
+template = install_dir / "configs" / "i3" / "tsumikisu.conf"
+text = template.read_text()
+replacements = {
+    "{{TSUMIKISU_DIR}}": install_dir.as_posix(),
+    "{{LAUNCHER_SCRIPT}}": (install_dir / "scripts" / "tsumikisu-launcher.py").as_posix(),
+    "{{HOTKEYS_SCRIPT}}": (install_dir / "scripts" / "tsumikisu-hotkeys.sh").as_posix(),
+}
+for key, value in replacements.items():
+    text = text.replace(key, value)
+target.write_text(text)
+PY
+
+	local main_config="$i3_config_dir/config"
+	touch "$main_config"
+	local include_line="include $target_conf"
+	if ! grep -Fxq "$include_line" "$main_config"; then
+		printf "\n# Tsumikisu integration\n%s\n" "$include_line" >>"$main_config"
+	fi
+
+	log_success "✅ i3 helpers installed at $target_conf"
+}
+
 usage() {
 	log_error "❌ Usage: $0 [OPTION]..."
 	log_info "ℹ️  Execute one or more operations in sequence."
@@ -364,6 +406,7 @@ fi
 if [ "$SHOULD_SETUP" = true ]; then
 	log_info "=== 🐍 Setting up Virtual Environment ==="
 	setup_venv
+	install_i3_config
 fi
 
 if [ "$SHOULD_START" = true ]; then
