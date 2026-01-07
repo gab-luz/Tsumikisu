@@ -1,14 +1,5 @@
 <p align="center"><img src="assets/images/tsumiki.png" align="centre" width="420" height="360"/></p>
 <h1 align="center"><img src="https://raw.githubusercontent.com/JaKooLit/Telegram-Animated-Emojis/refs/heads/main/Activity/Sparkles.webp"/ height=35> Tsumikisu <img src="https://raw.githubusercontent.com/JaKooLit/Telegram-Animated-Emojis/refs/heads/main/Activity/Sparkles.webp"/ height=35></h1>
-<p align="center">
- <a href="https://github.com/rubiin/Tsumiki/blob/master/LICENSE"><img alt="GitHub" src="https://img.shields.io/github/license/rubiin/Tsumiki"></a>
-  <a href='http://makeapullrequest.com'><img alt='PRs Welcome' src='https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=shields'/></a>
-  <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/rubiin/Tsumiki"/>
-  <img alt="GitHub closed issues" src="https://img.shields.io/github/issues-closed/rubiin/Tsumiki"/>
-  <img alt="discord" src="https://img.shields.io/discord/1200448076620501063" />
-</p>
-
-
 Tsumikisu (formerly Tsumiki / Hydepanel) started as a Hyprland-focused shell built on the [Fabric Widget System](https://github.com/Fabric-Development/fabric). Today this fork is taking a different path: it is being rebuilt as a pure **X11 shell** that tries to mimic the polish of Hyprland while avoiding the hard constraints of Wayland. The project is still in **pre-alpha**; much of the infrastructure is being reimagined so Tsumikisu can land on i3, sway-like layouts, or any other X11 session with confidence.
 
 The name Tsumikisu blends “tsumiki” with “X11” (pronounced “su-me-ki-sue”), reminding you that this version is engineered for the Xorg layer while keeping the modular, lightweight spirit of the original building-block design.
