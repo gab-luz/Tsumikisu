@@ -14,7 +14,7 @@ from fabric.widgets.wayland import WaylandWindow as Window
 from gi.repository import Gdk, Glace, GLib, Gtk
 
 from modules.app_launcher import AppLauncher
-from shared.popoverv1 import PopOverWindow
+from shared.popover import Popover
 from utils.app import AppUtils
 from utils.config import widget_config
 from utils.constants import PINNED_APPS_FILE
@@ -206,33 +206,39 @@ class AppBar(Box):
                 transition_duration=400,
             )
 
-            self.popup = PopOverWindow(
-                parent,
-                child=self.popup_revealer,
-                margin="0px 0px 80px 0px",
-                visible=False,
+            self.preview_popover = Popover(
+                point_to=None,
+                content=self.popup_revealer,
             )
 
             self.popup_revealer.connect(
                 "notify::child-revealed",
-                lambda *_: self.popup.set_visible(False)
+                lambda *_: self.preview_popover.hide_popover()
                 if not self.popup_revealer.child_revealed
                 else None,
             )
 
+            self._last_preview_button = None
+
     def _close_popup(self, *_):
         self.popup_revealer.unreveal()
+        self.preview_popover.hide_popover()
         return False
 
     def _capture_callback(self, pbuf, _):
         self._preview_image.set_from_pixbuf(
             pbuf.scale_simple(self.preview_size[0], self.preview_size[1], 2)
         )
-        self.popup.set_visible(True)
+        if self._last_preview_button:
+            self.preview_popover.set_pointing_to(self._last_preview_button)
+        self.preview_popover.open()
         self.popup_revealer.reveal()
 
     def _update_preview_image(self, client: Glace.Client, client_button: Button):
-        self.popup.set_pointing_to(client_button)
+        if not hasattr(self, "preview_popover"):
+            return
+        self._last_preview_button = client_button
+        self.preview_popover.set_pointing_to(client_button)
 
         self._manager.capture_client(
             client=client,

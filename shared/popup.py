@@ -1,14 +1,19 @@
+"""Popup helpers adapted to X11-friendly Fabric windows."""
+
 from typing import Literal
 
+import gi
 from fabric.widgets.box import Box
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.revealer import Revealer
-from fabric.widgets.wayland import WaylandWindow as Window
+from fabric.widgets.window import Window
 from fabric.widgets.widget import Widget
 from gi.repository import Gdk, GLib
 
-from utils.monitors import HyprlandWithMonitors
+from services.window_manager import WindowManagerService
 from utils.types import Anchor, Keyboard_Mode, Layer
+
+gi.require_versions({"Gtk": "3.0", "Gdk": "3.0"})
 
 
 class Padding(EventBox):
@@ -227,13 +232,12 @@ class PopupWindow(Window):
         self.timeout = timeout
         self.current_timeout = 0
         self.popup_running = False
-
         self.popup_visible = popup_visible
-
         self.enable_inhibitor = enable_inhibitor
 
-        self.monitor_number: int | None = None
-        self.hyprland_monitor = HyprlandWithMonitors()
+        self.window_manager = WindowManagerService()
+        self.window_manager.connect("windows-changed", self._maybe_hide_popup)
+        self.window_manager.connect("workspaces-changed", self._maybe_hide_popup)
 
         self.reveal_child = PopupRevealer(
             popup_window=self,
@@ -261,28 +265,20 @@ class PopupWindow(Window):
             on_key_release_event=self.on_key_release,
         )
 
+    def _maybe_hide_popup(self, *_):
+        if self.popup_visible:
+            self.hide_popup()
+
     def on_key_release(self, _, event_key: Gdk.EventKey):
         if event_key.keyval == Gdk.KEY_Escape:
-            self.popup_visible = False
-            self.reveal_child.revealer.set_reveal_child(self.popup_visible)
+            self.hide_popup()
 
     def on_inhibit_click(self, *_):
-        self.popup_visible = False
-        self.reveal_child.revealer.set_reveal_child(self.popup_visible)
+        self.hide_popup()
 
     def toggle_popup(self, monitor: bool = False):
-        if monitor:
-            curr_monitor = self.hyprland_monitor.get_current_gdk_monitor_id()
-            self.monitor = curr_monitor
-            if self.monitor_number != curr_monitor and self.popup_visible:
-                self.monitor_number = curr_monitor
-                return
-
-            self.monitor_number = curr_monitor
-
         if not self.popup_visible:
             self.reveal_child.revealer.set_visible(True)
-
         self.set_property("pass-through", not self.enable_inhibitor)
         self.popup_visible = not self.popup_visible
         self.reveal_child.revealer.set_reveal_child(self.popup_visible)
@@ -291,9 +287,6 @@ class PopupWindow(Window):
         return self.toggle_popup()
 
     def popup_timeout(self):
-        curr_monitor = self.hyprland_monitor.get_current_gdk_monitor_id()
-        self.monitor = curr_monitor
-
         if not self.popup_visible:
             self.reveal_child.revealer.set_visible(True)
         if self.popup_running:
@@ -305,8 +298,7 @@ class PopupWindow(Window):
 
         def popup_func():
             if self.current_timeout >= self.timeout:
-                self.popup_visible = False
-                self.reveal_child.revealer.set_reveal_child(self.popup_visible)
+                self.hide_popup()
                 self.current_timeout = 0
                 self.popup_running = False
                 return False
@@ -315,3 +307,9 @@ class PopupWindow(Window):
 
         self.set_property("pass-through", not self.enable_inhibitor)
         GLib.timeout_add(500, popup_func)
+
+    def hide_popup(self):
+        if not self.popup_visible:
+            return
+        self.popup_visible = False
+        self.reveal_child.revealer.set_reveal_child(self.popup_visible)

@@ -201,6 +201,15 @@ install_packages() {
 		pkgconf
 		wf-recorder
 		kitty
+		i3
+		i3status
+		i3lock
+		dmenu
+		rofi
+		xorg-server
+		xorg-xinit
+		xorg-xrandr
+		xorg-xsetroot
 		python
 		pacman-contrib
 		gtk3

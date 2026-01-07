@@ -1,5 +1,5 @@
 <p align="center"><img src="assets/images/tsumiki.png" align="centre" width="420" height="360"/></p>
-<h1 align="center"><img src="https://raw.githubusercontent.com/JaKooLit/Telegram-Animated-Emojis/refs/heads/main/Activity/Sparkles.webp"/ height=35> Tsumiki <img src="https://raw.githubusercontent.com/JaKooLit/Telegram-Animated-Emojis/refs/heads/main/Activity/Sparkles.webp"/ height=35></h1>
+<h1 align="center"><img src="https://raw.githubusercontent.com/JaKooLit/Telegram-Animated-Emojis/refs/heads/main/Activity/Sparkles.webp"/ height=35> Tsumikisu <img src="https://raw.githubusercontent.com/JaKooLit/Telegram-Animated-Emojis/refs/heads/main/Activity/Sparkles.webp"/ height=35></h1>
 <p align="center">
  <a href="https://github.com/rubiin/Tsumiki/blob/master/LICENSE"><img alt="GitHub" src="https://img.shields.io/github/license/rubiin/Tsumiki"></a>
   <a href='http://makeapullrequest.com'><img alt='PRs Welcome' src='https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=shields'/></a>
@@ -9,11 +9,16 @@
 </p>
 
 
-Tsumiki (formerly Hydepanel) is a modular status bar for the Hyprland Wayland compositor. Built on [Fabric Widget System](https://github.com/Fabric-Development/fabric) from the ground up, it offers a flexible architecture for building custom panels with individual widgets. It’s designed to be lightweight, performant, and user-configurable.
+Tsumikisu (formerly Tsumiki / Hydepanel) started as a Hyprland-focused shell built on the [Fabric Widget System](https://github.com/Fabric-Development/fabric). Today this fork is taking a different path: it is being rebuilt as a pure **X11 shell** that tries to mimic the polish of Hyprland while avoiding the hard constraints of Wayland. The project is still in **pre-alpha**; much of the infrastructure is being reimagined so Tsumikisu can land on i3, sway-like layouts, or any other X11 session with confidence.
 
-The name Tsumiki (pronounced as su-me-ki) comes from the Japanese word "tsumiki" (積み木), which means "building blocks". Just like toy blocks that stack together to form something greater, Tsumiki is designed to be modular, lightweight, and easy to build upon
+The name Tsumikisu blends “tsumiki” with “X11” (pronounced “su-me-ki-sue”), reminding you that this version is engineered for the Xorg layer while keeping the modular, lightweight spirit of the original building-block design.
 
 > *No, this isn't Waybar. Yes, it's written in Python. Yes, it's still fast.* 🐍
+
+> **Why X11?**  
+I wanted a Hyprland-style desktop experience but the Wayland ecosystem kept getting in the way. Running the Android emulator was unreliable, Winboat never behaved under Wayland, DaVinci Resolve kept breaking, and every other graphical pipeline seemed to surface a new blocker. I expect many of those pain points may never be fixed or will take years to stabilize, so Tsumiki is being reborn on X11 where those problems either disappear or are much easier to work around.
+
+> This repo is not yet ready for anyone who is not willing to help; features are incomplete, the dock/overview are brittle, and the overall experience is still pre-alpha. Use it only if you are curious about an X11-native Hyprland alternative and are happy to debug yourself.
 
 <h2><sub><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Camera%20with%20Flash.png" alt="Camera with Flash" width="25" height="25" /></sub> Screenshots</h2>
 
@@ -51,8 +56,8 @@ The name Tsumiki (pronounced as su-me-ki) comes from the Japanese word "tsumiki"
 
 ## ✨ Features
 
-- 🖥 **Tailored for Hyprland**
-  Built with full support for Hyprland’s ecosystem and event model.
+- 🖥 **Tailored for X11 Hyprland-style pipes**
+  Inspired by Hyprland but architected to plug into i3/X11 sessions instead of a Wayland compositor.
 
 - 🧩 **Modular Widget System**
   Includes pluggable widgets for Dock, Launcher, CPU, memory, network, media playback, battery, and more.
@@ -87,7 +92,7 @@ The name Tsumiki (pronounced as su-me-ki) comes from the Japanese word "tsumiki"
 ---
 
 > [!NOTE]
-> You need a functioning Hyprland installation.
+> You need a functioning X11 session (i3, bspwm, etc.). Wayland compositors are not supported yet.
 
 ## **Getting Started**
 
@@ -137,11 +142,11 @@ power-profiles-daemon
 ## To record screen through recorder module
 wf-recorder & slurp
 
-## To activate Hyprland’s native blue light filter
-hyprsunset
+## To adjust color temperature
+redshift
 
-## To activate Hyprland’s native idle inhibitor
-hypridle
+## To keep the screen awake/inhibit when needed
+xss-lock
 
 ## To use media module on quick settings
 playerctl
@@ -154,10 +159,10 @@ nvtop
 
 ```
 
-- Clone this repository:
+Clone this repository:
 
 ```sh
-git clone https://github.com/rubiin/Tsumiki.git ~/.config/tsumiki
+git clone https://github.com/rubiin/Tsumiki.git ~/.config/tsumikisu
 ```
 
 - Run the following command to install the required packages for particular os, few of them are already installed if you have a working system:
@@ -196,7 +201,7 @@ If you prefer to have more control over the installation process, you can instal
 Using `yay` to install the required packages:
 
 ```sh
-yay -S --needed	pipewire playerctl dart-sass power-profiles-daemon networkmanager brightnessctl pkgconf wf-recorder kitty python pacman-contrib gtk3 cairo gtk-layer-shell libgirepository noto-fonts-emoji gobject-introspection gobject-introspection-runtime libnotify cliphist satty nvtop gnome-bluetooth-3.0 slurp imagemagick tesseract tesseract-data-eng ttf-jetbrains-mono-nerd grimblast-git glace-git matugen-bin
+yay -S --needed	pipewire playerctl dart-sass power-profiles-daemon networkmanager brightnessctl pkgconf wf-recorder kitty python pacman-contrib gtk3 cairo gtk-layer-shell libgirepository noto-fonts-emoji gobject-introspection gobject-introspection-runtime libnotify cliphist satty nvtop gnome-bluetooth-3.0 slurp imagemagick tesseract tesseract-data-eng ttf-jetbrains-mono-nerd grimblast-git glace-git matugen-bin i3 i3status i3lock dmenu rofi xorg-server xorg-xinit xorg-xrandr xorg-xsetroot picom
 ```
 
 If you have something else besides `yay`, install with the respective aur helper.
@@ -241,16 +246,13 @@ Once the dependencies are installed, run the following command to start the bar 
 
 ## **Usage**
 
-Add this to your `.config/hyprland.conf`
+On X11, add an exec line to your window manager or login script so Tsumikisu starts automatically.
 
 ```sh
-exec = `sleep 5; ~/.config/tsumiki/init.sh -start`
-
+exec --no-startup-id bash -c "sleep 3 && ~/.config/tsumikisu/init.sh -start"
 ```
 
-> **Note**: modify the path accordingly
-
-Check FAQs for common things you are likely to encounter
+Adjust the path if you keep the repo elsewhere.
 
 ## Updating
 
@@ -339,30 +341,15 @@ to install all the required packages and dependencies. Additionally, you can als
 
 
 ## Post-Installation
-Add these rules to your `hyprland.conf` to make blur and other effects work properly
 
-```conf
-layerrule = blur, ^tsumiki-notifications$
-layerrule = xray 0, ^tsumiki-notifications$
-layerrule = blurpopups, ^tsumiki-notifications$
-layerrule = ignorezero, ^tsumiki-notifications$
-layerrule = noanim , ^tsumiki-notifications$
-layerrule = blur, ^fabric$
-layerrule = ignorezero, ^fabric$
-layerrule = xray 0, ^fabric$
-layerrule = blurpopups, ^fabric$
-layerrule = blur, ^tsumiki$
-layerrule = xray 0, ^tsumiki$
-layerrule = blurpopups, ^tsumiki$
-layerrule = ignorezero, ^tsumiki$
-layerrule = blur ,gtk-layer-shell
-layerrule = ignorezero ,gtk-layer-shell
-layerrule = blur, ^launcher$
-layerrule = xray 0, ^launcher$
-layerrule = blurpopups, ^launcher$
-layerrule = ignorezero, ^launcher$
-layerrule = animation popin, ^launcher$
+For X11 sessions you can start Tsumikisu from your `.xprofile`, `.xinitrc`, or i3 config, and pair it with a compositor of your choice (picom, xcompmgr, etc.). Example for `~/.xinitrc`:
+
+```sh
+# Tsumikisu shell
+~/.config/tsumikisu/init.sh -start &
 ```
+
+If you run on i3, the exec command above can live in `~/.config/i3/config` instead.
 
 ## Contributing
 
