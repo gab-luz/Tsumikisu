@@ -64,7 +64,7 @@ arch)
   exit 1
   ;;
 esac
-
+# installing python packages
 python3 -m pip install --upgrade pip setuptools wheel
 python3 -m pip install uv
 python3 -m pip install -r requirements.txt
