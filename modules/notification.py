@@ -18,7 +18,7 @@ from fabric.widgets.grid import Grid
 from fabric.widgets.label import Label
 from fabric.widgets.overlay import Overlay
 from fabric.widgets.revealer import Revealer
-from fabric.widgets.wayland import WaylandWindow as Window
+from fabric.widgets.x11 import X11Window as Window
 from fabric.widgets.widget import Widget
 from gi.repository import Gdk, GdkPixbuf, GLib
 

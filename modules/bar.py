@@ -6,7 +6,7 @@ from fabric.widgets.box import Box
 from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.revealer import Revealer
-from fabric.widgets.wayland import WaylandWindow as Window
+from fabric.widgets.x11 import X11Window as Window
 from gi.repository import GLib
 
 from utils.constants import ASSETS_DIR

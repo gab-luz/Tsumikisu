@@ -1,6 +1,6 @@
 from fabric.widgets.box import Box
 from fabric.widgets.label import Label
-from fabric.widgets.wayland import WaylandWindow as Window
+from fabric.widgets.x11 import X11Window as Window
 
 from utils.widget_settings import BarConfig
 

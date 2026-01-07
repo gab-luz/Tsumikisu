@@ -6,7 +6,7 @@ from fabric.widgets.box import Box
 from fabric.widgets.image import Image
 from fabric.widgets.label import Label
 from fabric.widgets.revealer import Revealer
-from fabric.widgets.wayland import WaylandWindow as Window
+from fabric.widgets.x11 import X11Window as Window
 from gi.repository import GLib, GObject
 
 from services import audio_service

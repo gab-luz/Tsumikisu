@@ -10,7 +10,7 @@ from fabric.widgets.eventbox import EventBox
 from fabric.widgets.image import Image
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.separator import Separator
-from fabric.widgets.wayland import WaylandWindow as Window
+from fabric.widgets.x11 import X11Window as Window
 from gi.repository import Gdk, Glace, GLib, Gtk
 
 from modules.app_launcher import AppLauncher
