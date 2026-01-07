@@ -28,21 +28,6 @@ I wanted a Hyprland-style desktop experience but the Wayland ecosystem kept gett
   </tr>
 </table>
 
-<table align="center">
-  <tr>
-    <td align="center"><sup>✨ sᴜᴘᴘᴏʀᴛ ᴛʜᴇ ᴘʀᴏᴊᴇᴄᴛ ✨</sup></td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href='https://ko-fi.com/rubiin' target='_blank'>
-        <img style='border:0px;height:128px;'
-             src='https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExc3N4NzlvZWs2Z2tsaGx4aHgwa3UzMWVpcmNwZTNraTM2NW84ZDlqbiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/PaF9a1MpqDzovyqVKj/giphy.gif'
-             border='0' alt='Support me on Ko-fi!' />
-      </a>
-    </td>
-  </tr>
-</table>
-
 ---
 
 ## ✨ Features
