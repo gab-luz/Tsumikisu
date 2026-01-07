@@ -1,17 +1,16 @@
 import contextlib
-
-from fabric.widgets.wayland import WaylandWindow
+from fabric.widgets.x11 import X11Window
 from gi.repository import Gtk, GtkLayerShell
 
 from utils.monitors import HyprlandWithMonitors
 
 
-class PopOverWindow(WaylandWindow):
+class PopOverWindow(X11Window):
     """A simple popover window that can point to a widget."""
 
     def __init__(
         self,
-        parent: WaylandWindow,
+        parent: X11Window,
         pointing_to: Gtk.Widget | None = None,
         margin: tuple[int, ...] | str = "0px 0px 0px 0px",
         **kwargs,
