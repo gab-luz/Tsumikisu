@@ -27,21 +27,19 @@ from utils.widget_utils import (
     get_audio_icon_name,
     get_brightness_icon_name,
 )
-from widgets.quick_settings.submenu.hyprsunset import (
-    HyprSunsetSubMenu,
-    HyprSunsetToggle,
-)
 
 from .shortcuts import ShortcutsContainer
 from .submenu.bluetooth import BluetoothSubMenu, BluetoothToggle
 from .submenu.power_profiles import PowerProfileSubMenu, PowerProfileToggle
 from .submenu.wifi import WifiSubMenu, WifiToggle
 from .togglers import (
-    HyprIdleQuickSetting,
     NotificationQuickSetting,
 )
 
 gi.require_versions({"Gtk": "3.0"})
+
+# Check if running under Hyprland
+_is_hyprland = bool(os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"))
 
 
 class QuickSettingsButtonBox(Box):
@@ -53,6 +51,7 @@ class QuickSettingsButtonBox(Box):
             self.active_submenu = None
 
     def __init__(self, popup, **kwargs):
+        logger.info("[QuickSettingsButtonBox] __init__ called")
         super().__init__(
             orientation="v",
             name="quick-settings-button-box",
@@ -73,21 +72,23 @@ class QuickSettingsButtonBox(Box):
         self.active_submenu = None
 
         # Bluetooth
+        logger.info("[QuickSettingsButtonBox] Creating BluetoothToggle...")
         self.bluetooth_toggle = BluetoothToggle(
             submenu=BluetoothSubMenu(),
         )
 
         # Wifi
+        logger.info("[QuickSettingsButtonBox] Creating WifiToggle...")
         self.wifi_toggle = WifiToggle(
             submenu=WifiSubMenu(),
         )
 
+        logger.info("[QuickSettingsButtonBox] Creating PowerProfileToggle...")
         self.power_pfl = PowerProfileToggle(submenu=PowerProfileSubMenu(), popup=popup)
-
-        self.hyprsunset = HyprSunsetToggle(submenu=HyprSunsetSubMenu(), popup=popup)
-        self.hypridle = HyprIdleQuickSetting(popup=popup)
+        logger.info("[QuickSettingsButtonBox] Creating NotificationQuickSetting...")
         self.notification_btn = NotificationQuickSetting(popup=popup)
 
+        logger.info("[QuickSettingsButtonBox] Attaching widgets to grid...")
         self.grid.attach(self.wifi_toggle, 1, 1, 1, 1)
 
         self.grid.attach_next_to(
@@ -98,30 +99,57 @@ class QuickSettingsButtonBox(Box):
             self.power_pfl, self.wifi_toggle, Gtk.PositionType.BOTTOM, 1, 1
         )
 
-        self.grid.attach_next_to(
-            self.hyprsunset, self.bluetooth_toggle, Gtk.PositionType.BOTTOM, 1, 1
-        )
+        # Hyprland-specific widgets (hyprsunset, hypridle)
+        self.hyprsunset = None
+        self.hypridle = None
 
-        self.grid.attach_next_to(
-            self.hypridle, self.power_pfl, Gtk.PositionType.BOTTOM, 1, 1
-        )
+        logger.info("[QuickSettingsButtonBox] _is_hyprland=%s", _is_hyprland)
+        if _is_hyprland:
+            logger.info("[QuickSettingsButtonBox] Creating Hyprland-specific widgets...")
+            from widgets.quick_settings.submenu.hyprsunset import (
+                HyprSunsetSubMenu,
+                HyprSunsetToggle,
+            )
+            from .togglers import HyprIdleQuickSetting
 
-        self.grid.attach_next_to(
-            self.notification_btn, self.hypridle, Gtk.PositionType.RIGHT, 1, 1
-        )
+            self.hyprsunset = HyprSunsetToggle(submenu=HyprSunsetSubMenu(), popup=popup)
+            self.hypridle = HyprIdleQuickSetting(popup=popup)
+
+            self.grid.attach_next_to(
+                self.hyprsunset, self.bluetooth_toggle, Gtk.PositionType.BOTTOM, 1, 1
+            )
+
+            self.grid.attach_next_to(
+                self.hypridle, self.power_pfl, Gtk.PositionType.BOTTOM, 1, 1
+            )
+
+            self.grid.attach_next_to(
+                self.notification_btn, self.hypridle, Gtk.PositionType.RIGHT, 1, 1
+            )
+
+            self.hyprsunset.connect("reveal-clicked", self.set_active_submenu)
+        else:
+            logger.info("[QuickSettingsButtonBox] X11 mode - skipping Hyprland widgets")
+            # On X11, place notification button in row 2
+            self.grid.attach_next_to(
+                self.notification_btn, self.bluetooth_toggle, Gtk.PositionType.BOTTOM, 1, 1
+            )
 
         self.wifi_toggle.connect("reveal-clicked", self.set_active_submenu)
         self.bluetooth_toggle.connect("reveal-clicked", self.set_active_submenu)
         self.power_pfl.connect("reveal-clicked", self.set_active_submenu)
-        self.hyprsunset.connect("reveal-clicked", self.set_active_submenu)
 
-        self.children = (
+        children_list = [
             self.grid,
             self.wifi_toggle.submenu,
             self.bluetooth_toggle.submenu,
             self.power_pfl.submenu,
-            self.hyprsunset.submenu,
-        )
+        ]
+        if self.hyprsunset is not None:
+            children_list.append(self.hyprsunset.submenu)
+
+        self.children = tuple(children_list)
+        logger.info("[QuickSettingsButtonBox] __init__ complete")
 
         self.connect("unmap", self.close_all_submenus)
 
@@ -137,12 +165,14 @@ class QuickSettingsMenu(Box):
     """A menu to display the weather information."""
 
     def __init__(self, config: dict, popup, **kwargs):
+        logger.info("[QuickSettingsMenu] __init__ called")
         super().__init__(
             name="quicksettings-menu", orientation="v", all_visible=True, **kwargs
         )
 
         self.config = config
         self.popup = popup
+        logger.info("[QuickSettingsMenu] Setting up user avatar and info...")
 
         raw_avatar_path = self.config.get("user", {}).get("avatar", "$HOME/.face")
         avatar_path = os.path.expanduser(os.path.expandvars(raw_avatar_path))
@@ -458,21 +488,30 @@ class QuickSettingsButtonWidget(ButtonWidget):
 
     def show_popover(self, *_):
         """Show the popover."""
-        if self.popup is None:
-            from shared.popover import Popover
+        logger.info("[QuickSettings] show_popover called")
+        try:
+            if self.popup is None:
+                logger.info("[QuickSettings] Creating new Popover...")
+                from shared.popover import Popover
 
-            self.popup = Popover(
-                point_to=self,
-            )
-            self.popup.set_content(
-                QuickSettingsMenu(config=self.config, popup=self.popup),
-            )
-            self.popup.connect(
-                "popover-closed", lambda *_: self.remove_style_class("active")
-            )
-        self.popup.open()
+                self.popup = Popover(
+                    point_to=self,
+                )
+                logger.info("[QuickSettings] Popover created, setting content...")
+                self.popup.set_content(
+                    QuickSettingsMenu(config=self.config, popup=self.popup),
+                )
+                logger.info("[QuickSettings] Content set, connecting signals...")
+                self.popup.connect(
+                    "popover-closed", lambda *_: self.remove_style_class("active")
+                )
+            logger.info("[QuickSettings] Opening popover...")
+            self.popup.open()
+            logger.info("[QuickSettings] Popover opened successfully")
 
-        self.add_style_class("active")
+            self.add_style_class("active")
+        except Exception as e:
+            logger.exception(f"[QuickSettings] Error showing popover: {e}")
 
     def _get_network_icon(self, *_):
         # Check if the network service is ready

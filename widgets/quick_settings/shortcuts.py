@@ -1,5 +1,6 @@
-from fabric.hyprland.widgets import get_hyprland_connection
-from fabric.utils import logger
+import os
+
+from fabric.utils import exec_shell_command_async, logger
 from fabric.widgets.box import Box
 from fabric.widgets.grid import Grid
 from fabric.widgets.label import Label
@@ -7,6 +8,18 @@ from fabric.widgets.label import Label
 from shared.buttons import HoverButton
 from utils.widget_settings import ShortCutItem
 from utils.widget_utils import nerd_font_icon
+
+# Try to import Hyprland connection, but don't fail if unavailable
+_hyprland_connection = None
+_is_hyprland = bool(os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"))
+
+if _is_hyprland:
+    try:
+        from fabric.hyprland.widgets import get_hyprland_connection
+
+        _hyprland_connection = get_hyprland_connection()
+    except Exception as exc:
+        logger.warning("[Shortcuts] Hyprland connection unavailable: %s", exc)
 
 
 class ShortcutButton(HoverButton):
@@ -18,8 +31,6 @@ class ShortcutButton(HoverButton):
         self.command = shortcut_config.get("command", "")
 
         box = Box(orientation="v", spacing=4, v_expand=True)
-
-        self._hyprland_connection = get_hyprland_connection()
 
         if "icon" in shortcut_config:
             icon = nerd_font_icon(
@@ -50,9 +61,13 @@ class ShortcutButton(HoverButton):
     def on_click(self, *_):
         """Execute the command when clicked."""
         try:
-            self._hyprland_connection.send_command_async(
-                f"dispatch exec {self.command}", lambda _: None
-            )
+            if _hyprland_connection is not None:
+                _hyprland_connection.send_command_async(
+                    f"dispatch exec {self.command}", lambda _: None
+                )
+            else:
+                # Fallback for X11 or non-Hyprland environments
+                exec_shell_command_async(self.command, lambda _: None)
         except Exception as e:
             logger.exception(f"Error executing shortcut command: {e}")
 

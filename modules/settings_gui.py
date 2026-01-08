@@ -16,6 +16,7 @@ from shared.buttons import HoverButton
 from utils.config import configuration, theme_config, widget_config
 from utils.constants import ASSETS_DIR
 from utils.functions import write_json_file
+from utils.i3 import sync_i3_config
 from utils.types import (
     Anchor,
     Bar_Location,
@@ -484,7 +485,7 @@ class SettingsGUI(Window):
             position_combo = self._create_combo(
                 get_literal_values(Dock_Position),
                 dock_position,
-                lambda cb, p="modules.dock": self._update_config(
+                lambda cb, p="config.modules.dock": self._update_config(
                     p, "position", cb.get_active_text()
                 ),
             )
@@ -494,7 +495,7 @@ class SettingsGUI(Window):
             behavior_combo = self._create_combo(
                 get_literal_values(Dock_Behavior),
                 dock_behavior,
-                lambda cb, p="modules.dock": self._update_config(
+                lambda cb, p="config.modules.dock": self._update_config(
                     p, "behavior", cb.get_active_text()
                 ),
             )
@@ -734,6 +735,12 @@ class SettingsGUI(Window):
             write_json_file(configuration.theme_config_file, self.theme)
 
             logger.info("[SETTINGS] Configuration saved successfully")
+            halo_color = (
+                self.theme.get("modules", {})
+                .get("dock", {})
+                .get("halo_color")
+            )
+            sync_i3_config(halo_color)
             self.modified = False
             self.save_btn.set_sensitive(False)
             exec_shell_command_async(

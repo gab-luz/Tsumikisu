@@ -4,6 +4,7 @@ from fabric.core.widgets import WorkspaceButton
 from fabric.utils import bulk_connect
 from fabric.widgets.box import Box
 from fabric.widgets.button import Button
+from fabric.widgets.label import Label
 
 try:
     from fabric.hyprland.widgets import HyprlandWorkspaces as _HyprlandWorkspaces
@@ -111,15 +112,23 @@ class WorkSpacesWidget(BoxWidget):
         ]
 
         for workspace in workspaces:
+            label_text = self._create_workspace_label(
+                workspace["id"]
+            ) if self.show_numbered else None
             button = Button(
-                label=self._create_workspace_label(workspace["id"])
-                if self.show_numbered
-                else None,
                 style_classes=["workspace-button"],
                 on_button_press_event=lambda *_, ws_id=workspace["id"]: self.window_manager.activate_workspace(ws_id),
             )
+            if label_text:
+                indicator = Label(
+                    label=label_text,
+                    style_classes=["workspace-number"],
+                )
+                button.add(indicator)
             self._apply_x11_workspace_style(button, workspace)
             self.workspace_box.add(button)
+
+        self.workspace_box.show_all()
 
     def _apply_x11_workspace_style(self, button: Button, workspace: dict) -> None:
         if workspace.get("active"):
@@ -137,9 +146,17 @@ class WorkSpacesWidget(BoxWidget):
     def _setup_button(self, ws_id: int) -> WorkspaceButton:
         button = WorkspaceButton(
             id=ws_id,
-            label=self._create_workspace_label(ws_id) if self.show_numbered else None,
+            label=None,
             visible=ws_id not in self.ignored_ws,
         )
+
+        if self.show_numbered:
+            label_text = self._create_workspace_label(ws_id)
+            indicator = Label(
+                label=label_text,
+                style_classes=["workspace-number"],
+            )
+            button.add(indicator)
 
         # Only add empty state styling when showing all workspaces
         if not self.hide_unoccupied:

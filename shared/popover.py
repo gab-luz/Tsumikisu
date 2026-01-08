@@ -1,15 +1,24 @@
+import os
 from typing import ClassVar
 
 import gi
 from fabric.utils import bulk_connect, logger
 from fabric.widgets.box import Box
-from fabric.widgets.window import Window
 from fabric.widgets.widget import Widget
 from gi.repository import Gdk, GLib, GObject
 
 from services.window_manager import WindowManagerService
 
 gi.require_versions({"Gtk": "3.0", "Gdk": "3.0", "GObject": "2.0"})
+
+# Detect display server and import appropriate window class
+_is_wayland = bool(os.environ.get("WAYLAND_DISPLAY"))
+
+if _is_wayland:
+    from fabric.widgets.window import Window
+else:
+    from fabric.widgets.x11 import X11Window as Window
+    logger.info("[Popover] Using X11Window for popover windows")
 
 
 class PopoverManager:
@@ -38,15 +47,29 @@ class PopoverManager:
     def overlay(self):
         """Lazily create the overlay window on first access."""
         if self._overlay is None:
-            self._overlay = Window(
-                name="popover-overlay",
-                style_classes=["popover-overlay"],
-                title="tsumiki",
-                anchor="left top right bottom",
-                exclusivity="normal",
-                layer="overlay",
-                visible=False,
-            )
+            if _is_wayland:
+                self._overlay = Window(
+                    name="popover-overlay",
+                    style_classes=["popover-overlay"],
+                    title="tsumiki",
+                    anchor="left top right bottom",
+                    exclusivity="normal",
+                    layer="overlay",
+                    visible=False,
+                )
+            else:
+                # X11 overlay - fullscreen transparent window
+                logger.info("[Popover] Creating X11 overlay window")
+                self._overlay = Window(
+                    name="popover-overlay",
+                    style_classes=["popover-overlay"],
+                    title="tsumiki-overlay",
+                    visible=False,
+                )
+                # Make it fullscreen and transparent for X11
+                self._overlay.set_decorated(False)
+                self._overlay.set_type_hint(Gdk.WindowTypeHint.DOCK)
+                self._overlay.fullscreen()
             self._overlay.add(Box())
             self._overlay.connect("button-press-event", self.on_overlay_clicked)
         return self._overlay
@@ -63,15 +86,27 @@ class PopoverManager:
     def get_popover_window(self):
         """Get an available popover window or create a new one."""
         if self.available_windows:
+            logger.info("[Popover] Reusing available popover window from pool")
             return self.available_windows.pop()
 
-        window = Window(
-            type="popup",
-            layer="overlay",
-            name="popover-window",
-            anchor="left top",
-            visible=False,
-        )
+        logger.info("[Popover] Creating new popover window (is_wayland=%s)", _is_wayland)
+        if _is_wayland:
+            window = Window(
+                type="popup",
+                layer="overlay",
+                name="popover-window",
+                anchor="left top",
+                visible=False,
+            )
+        else:
+            # X11 popup window
+            window = Window(
+                name="popover-window",
+                title="tsumiki-popover",
+                visible=False,
+            )
+            window.set_decorated(False)
+            window.set_type_hint(Gdk.WindowTypeHint.POPUP_MENU)
         window.set_keep_above(True)
         return window
 
@@ -144,17 +179,22 @@ class Popover(Widget):
             self._manager.active_popover.hide_popover()
 
     def open(self, *_):
+        logger.info("[Popover] open() called, _content_window=%s", self._content_window)
         if not self._content_window:
             try:
+                logger.info("[Popover] Creating new popover...")
                 self._create_popover()
+                logger.info("[Popover] Popover created successfully")
             except Exception as e:
-                logger.exception(f"Could not create popover! Error: {e}")
+                logger.exception(f"[Popover] Could not create popover! Error: {e}")
                 return
         else:
+            logger.info("[Popover] Reusing existing popover window")
             self._manager.activate_popover(self)
             self._content_window.show()
             self._visible = True
 
+        logger.info("[Popover] Emitting popover-opened signal")
         self.emit("popover-opened")
 
     def _calculate_margins(self):
@@ -197,14 +237,24 @@ class Popover(Widget):
         self.set_position()
 
     def _create_popover(self):
+        logger.info("[Popover] _create_popover() called")
+        logger.info("[Popover] _content=%s, _content_factory=%s", self._content, self._content_factory)
+
         if self._content is None and self._content_factory is not None:
+            logger.info("[Popover] Creating content from factory...")
             self._content = self._content_factory()
 
+        logger.info("[Popover] Getting popover window from manager...")
         self._content_window = self._manager.get_popover_window()
+        logger.info("[Popover] Got window: %s", self._content_window)
+
+        logger.info("[Popover] Connecting draw signal to content...")
         self._content.connect("draw", self.on_content_ready)
 
+        logger.info("[Popover] Adding content to window...")
         self._content_window.add(Box(name="popover-content", children=self._content))
 
+        logger.info("[Popover] Connecting window signals...")
         bulk_connect(
             self._content_window,
             {
@@ -213,9 +263,11 @@ class Popover(Widget):
             },
         )
 
+        logger.info("[Popover] Activating popover and showing window...")
         self._manager.activate_popover(self)
         self._content_window.show()
         self._visible = True
+        logger.info("[Popover] Popover is now visible")
 
     def on_popover_focus_out(self, widget, event):
         GLib.timeout_add(100, self.hide_popover)

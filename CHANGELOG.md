@@ -11,6 +11,10 @@
 - Force the dock to respect the new `modules.dock.position` (defaults to the bottom edge) and extended visibility behaviors, so it anchors to the requested screen edge and obeys `always_show`, `auto_hide`, or `intellihide` policies (`modules/dock.py`, `utils/types.py`, `config.json`, `tsumiki.schema.json`).
 - Surfaced dock position/behavior controls on the Theme tab, updating the saved configuration via `_update_config` so users can toggle those options without editing JSON directly (`modules/settings_gui.py`, `utils/widget_settings.py`).
 - Update `init.sh` so the installer copies `configs/i3/tsumikisu.conf` over `~/.config/i3/config`, backing up any previous file, and keeps the templated paths in sync so i3 immediately loads the helper config (`init.sh`).
+- Added an i3 halo generator (`utils/i3.py`) that rewrites `~/.config/i3/config` from the template and lets Settings call it using `halo_color` from the Theme tab, so every window receives the requested halo color (`modules/settings_gui.py`, `theme.json`, `configs/i3/tsumikisu.conf`, `utils/i3.py`).
+- Added a `bindsym --release $mod` binding so pressing the Super key now fires the launcher directly (while `$mod+space` remains for compatibility), matching your request to open Tsumikisu via the modifier key (`configs/i3/tsumikisu.conf`).
+- Fixed `tsumikisu-launcher.py` so `ActivateAction` sends the correct `(s v a{sv})` variant instead of the invalid `(s v s)`, preventing the “Invalid GVariant format string” message when toggling launcher/hotkeys (`scripts/tsumikisu-launcher.py`).
+- Workspace buttons now render a `.workspace-number` label inside each button so the numeric indicators stay visible; both the Hyprland and X11 paths attach the label, and the workspace stylesheet styles `.workspace-number` accordingly (`widgets/workspaces.py`, `styles/workspace.scss`).
 
 ## [2.10.0](https://github.com/rubiin/Tsumiki/compare/v2.9.0...v2.10.0) (2025-12-10)
 

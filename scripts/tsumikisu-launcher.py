@@ -25,9 +25,10 @@ def toggle_window(window_name: str) -> None:
             None,
         )
         parameter = GLib.Variant("s", window_name)
+        detail = GLib.Variant("a{sv}", {})
         proxy.call_sync(
             "ActivateAction",
-            GLib.Variant("(s v s)", (ACTION_NAME, parameter, "")),
+            GLib.Variant("(s v a{sv})", (ACTION_NAME, parameter, detail)),
             Gio.DBusCallFlags.NONE,
             -1,
             None,

@@ -1,4 +1,3 @@
-from fabric.hyprland.widgets import get_hyprland_connection
 from fabric.utils import cooldown, exec_shell_command_async, invoke_repeater
 from fabric.widgets.scale import Scale
 
@@ -16,8 +15,6 @@ class HyprSunsetSubMenu(QuickSubMenu):
 
     def __init__(self, **kwargs):
         self.scan_button = None
-
-        self._hyprland_connection = get_hyprland_connection()
 
         self.scale = create_scale(
             name="hyprsunset-scale",

@@ -37,11 +37,14 @@ class WifiSubMenu(QuickSubMenu):
     """A submenu to display the Wifi settings."""
 
     def __init__(self, **kwargs):
+        logger.info("[WifiSubMenu] __init__ called")
         self.client = NetworkService()
+        logger.info("[WifiSubMenu] NetworkService created: %s", self.client)
 
         self.available_networks_listbox = ListBox(
             visible=True, name="available-networks-listbox"
         )
+        logger.info("[WifiSubMenu] Connecting to device-ready signal...")
         self.client.connect("device-ready", self.on_device_ready)
 
         self.scan_button = ScanButton(
@@ -60,6 +63,7 @@ class WifiSubMenu(QuickSubMenu):
             child=self.available_networks_listbox,
         )
 
+        logger.info("[WifiSubMenu] Calling super().__init__...")
         super().__init__(
             title="Network",
             title_icon=text_icons["wifi"]["generic"],
@@ -77,6 +81,7 @@ class WifiSubMenu(QuickSubMenu):
             "notify::child-revealed",
             self.start_new_scan,
         )
+        logger.info("[WifiSubMenu] __init__ complete")
 
     def on_child_revealed(self, *_):
         self.scan_button.set_sensitive(False)

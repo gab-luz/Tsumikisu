@@ -82,28 +82,41 @@ ensure_venv() {
 
 setup_venv() {
 	ensure_venv setup
-	ensure_venv activate
 
 	log_info "📦 Installing Python dependencies..."
 
-	if [ "$FORCE_REINSTALL" = true ]; then
-		log_warning "🔄 Force reinstalling packages..."
-		if ! pip install --force-reinstall -r requirements.txt; then
-			log_error "❌ Failed to force reinstall packages from requirements.txt."
-			deactivate
-			exit 1
+	# Use uv if available (faster), otherwise fall back to venv pip
+	if command -v uv &>/dev/null; then
+		log_info "🚀 Using uv for package installation..."
+		if [ "$FORCE_REINSTALL" = true ]; then
+			log_warning "🔄 Force reinstalling packages..."
+			if ! uv pip install --reinstall -r requirements.txt --python .venv/bin/python; then
+				log_error "❌ Failed to force reinstall packages from requirements.txt."
+				exit 1
+			fi
+		else
+			if ! uv pip install -r requirements.txt --python .venv/bin/python; then
+				log_error "❌ Failed to install packages from requirements.txt."
+				exit 1
+			fi
 		fi
 	else
-		if ! pip install -r requirements.txt; then
-			log_error "❌ Failed to install packages from requirements.txt."
-			deactivate
-			exit 1
+		log_info "📦 Using venv pip for package installation..."
+		if [ "$FORCE_REINSTALL" = true ]; then
+			log_warning "🔄 Force reinstalling packages..."
+			if ! .venv/bin/pip install --force-reinstall -r requirements.txt; then
+				log_error "❌ Failed to force reinstall packages from requirements.txt."
+				exit 1
+			fi
+		else
+			if ! .venv/bin/pip install -r requirements.txt; then
+				log_error "❌ Failed to install packages from requirements.txt."
+				exit 1
+			fi
 		fi
 	fi
 
 	log_success "✅ Python dependencies installed successfully."
-
-	deactivate
 }
 
 copy_config_files() {
@@ -275,6 +288,8 @@ install_packages() {
 		xorg-xrandr
 		xorg-xsetroot
 		python
+		python-pip
+		uv
 		pacman-contrib
 		gtk3
 		cairo
@@ -283,7 +298,6 @@ install_packages() {
 		noto-fonts-emoji
 		gobject-introspection
 		gobject-introspection-runtime
-		python-pip
 		python-gobject
 		python-psutil
 		python-cairo
@@ -360,22 +374,16 @@ install_i3_config() {
 		log_info "🗄️  Backed up existing i3 config to $backup"
 	fi
 
-	python3 - "$INSTALL_DIR" "$target_conf" <<PY
+	# Use venv python to have access to fabric and project modules
+	.venv/bin/python - "$INSTALL_DIR" <<PY
 import sys
 from pathlib import Path
 
 install_dir = Path(sys.argv[1]).expanduser()
-target = Path(sys.argv[2]).expanduser()
-template = install_dir / "configs" / "i3" / "tsumikisu.conf"
-text = template.read_text()
-replacements = {
-    "{{TSUMIKISU_DIR}}": install_dir.as_posix(),
-    "{{LAUNCHER_SCRIPT}}": (install_dir / "scripts" / "tsumikisu-launcher.py").as_posix(),
-    "{{HOTKEYS_SCRIPT}}": (install_dir / "scripts" / "tsumikisu-hotkeys.sh").as_posix(),
-}
-for key, value in replacements.items():
-    text = text.replace(key, value)
-target.write_text(text)
+sys.path.insert(0, install_dir.as_posix())
+from utils.i3 import sync_i3_config
+
+sync_i3_config()
 PY
 
 	log_success "✅ i3 config deployed at $target_conf"
