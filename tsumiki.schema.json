@@ -2044,9 +2044,15 @@
 						},
 						"behavior": {
 							"type": "string",
-							"enum": ["always_show", "intellihide"],
+							"enum": ["always_show", "intellihide", "auto_hide"],
 							"description": "Specifies the behavior of the dock.",
 							"default": "intellihide"
+						},
+						"position": {
+							"type": "string",
+							"enum": ["top", "bottom", "left", "right"],
+							"description": "Determines the screen edge where the dock is positioned.",
+							"default": "bottom"
 						},
 						"tooltip": {
 							"type": "boolean",

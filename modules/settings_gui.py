@@ -23,6 +23,7 @@ from utils.types import (
     Bar_Widget_Style,
     Data_Unit,
     Dock_Behavior,
+    Dock_Position,
     Layer,
     Orientation,
     Reveal_Animations,
@@ -471,6 +472,36 @@ class SettingsGUI(Window):
                 widget = self._create_theme_control(nested_path, key, value)
                 grid.attach(widget, 1, row, 1, 1)
                 row += 1
+
+        if module_name == "dock":
+            dock_config = self.config.get("modules", {}).get("dock", {})
+            dock_position = dock_config.get("position", "bottom")
+            dock_behavior = dock_config.get("behavior", "intellihide")
+
+            module_box.add(self._create_section_header("Dock Placement"))
+            control_grid = self._create_grid(margin_bottom=10)
+
+            position_combo = self._create_combo(
+                get_literal_values(Dock_Position),
+                dock_position,
+                lambda cb, p="modules.dock": self._update_config(
+                    p, "position", cb.get_active_text()
+                ),
+            )
+            control_grid.attach(self._create_label("position"), 0, 0, 1, 1)
+            control_grid.attach(position_combo, 1, 0, 1, 1)
+
+            behavior_combo = self._create_combo(
+                get_literal_values(Dock_Behavior),
+                dock_behavior,
+                lambda cb, p="modules.dock": self._update_config(
+                    p, "behavior", cb.get_active_text()
+                ),
+            )
+            control_grid.attach(self._create_label("behavior"), 0, 1, 1, 1)
+            control_grid.attach(behavior_combo, 1, 1, 1, 1)
+
+            module_box.add(control_grid)
 
         container.add(module_box)
 

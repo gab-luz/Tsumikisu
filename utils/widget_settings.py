@@ -5,6 +5,7 @@ from .types import (
     Bar_Location,
     Data_Unit,
     Dock_Behavior,
+    Dock_Position,
     Layer,
     Orientation,
     Osd_Type,
@@ -246,6 +247,7 @@ Dock = TypedDict(
     {
         "enabled": bool,
         "tooltip": bool,
+        "position": Dock_Position,
         "orientation": Orientation,
         "behavior": Dock_Behavior,
         "icon_size": int,

@@ -420,8 +420,11 @@ class Dock(Window):
         self.config = config.get("modules", {}).get("dock", {})
         self._app_bar = AppBar(self)
 
-        # Determine orientation and set appropriate styles
-        orientation = self.config.get("orientation", "horizontal")
+        position = self.config.get("position") or self.config.get("location") or "bottom"
+        orientation = self.config.get("orientation")
+        if orientation not in ("horizontal", "vertical"):
+            orientation = "horizontal" if position in ("top", "bottom") else "vertical"
+        self.config["orientation"] = orientation
         is_vertical = orientation == "vertical"
 
         # Set padding and transition based on orientation
@@ -438,11 +441,12 @@ class Dock(Window):
             transition_type=transition_type,
         )
 
-        if self.config.get("behavior", "always_show") == "always_show":
+        self.behavior = self.config.get("behavior", "intellihide")
+        if self.behavior == "always_show":
             self.revealer.set_reveal_child(True)
             child = self.revealer
         else:
-            # Adjust CenterBox for vertical orientation
+            self.revealer.set_reveal_child(False)
             if is_vertical:
                 centerbox = CenterBox(
                     orientation="vertical",
@@ -468,14 +472,19 @@ class Dock(Window):
 
         if (
             self.config.get("show_when_no_windows", False)
-            and self.config.get("behavior", "always_hide") == "intellihide"
+            and self.behavior == "intellihide"
         ):
             self.window_manager.connect("windows-changed", self._check_for_windows)
             self.window_manager.connect("workspaces-changed", self._check_for_windows)
             self._check_for_windows()
 
-        # Determine anchor based on config or default based on orientation
-        default_anchor = "center-left" if is_vertical else "bottom-center"
+        anchor_map = {
+            "top": "top-center",
+            "bottom": "bottom-center",
+            "left": "center-left",
+            "right": "center-right",
+        }
+        default_anchor = anchor_map.get(position, "bottom-center")
         anchor = self.config.get("anchor", default_anchor)
 
         super().__init__(
@@ -488,7 +497,10 @@ class Dock(Window):
 
     def _on_leave_notify(self):
         """Hide the dock when the pointer leaves."""
-        self.revealer.set_reveal_child(False)
+        if self.behavior == "intellihide":
+            self._check_for_windows()
+        else:
+            self.revealer.set_reveal_child(False)
 
     def _check_for_windows(self, *_):
         if self._active_workspace_has_windows():

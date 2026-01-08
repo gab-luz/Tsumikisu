@@ -38,7 +38,8 @@ Reveal_Animations = Literal[
 
 Orientation = Literal["vertical", "horizontal"]
 
-Dock_Behavior = Literal["always_show", "intellihide"]
+Dock_Behavior = Literal["always_show", "intellihide", "auto_hide"]
+Dock_Position = Literal["bottom", "top", "left", "right"]
 
 Bar_Location = Literal["top", "bottom"]
 

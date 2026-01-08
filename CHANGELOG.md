@@ -8,6 +8,8 @@
 - Guard Hyprland monitor helpers so missing sockets fall back to the GDK monitor list and Wnck `force_update()` calls no longer reenter (`modules/bar.py`, `services/window_manager.py`), letting i3 sessions create bars safely.
 - Harden UI helpers (popover positioning, button cursors, weather sunrise parsing) against edge cases so mouse interactions and time calculations no longer throw runtime errors (`shared/popover.py`, `shared/widget_container.py`, `utils/functions.py`).
 - Initialize quick settings brightness/network helpers with guards so the panel loads even when those services fail to start (`widgets/quick_settings/quick_settings.py`).
+- Force the dock to respect the new `modules.dock.position` (defaults to the bottom edge) and extended visibility behaviors, so it anchors to the requested screen edge and obeys `always_show`, `auto_hide`, or `intellihide` policies (`modules/dock.py`, `utils/types.py`, `config.json`, `tsumiki.schema.json`).
+- Surfaced dock position/behavior controls on the Theme tab, updating the saved configuration via `_update_config` so users can toggle those options without editing JSON directly (`modules/settings_gui.py`, `utils/widget_settings.py`).
 
 ## [2.10.0](https://github.com/rubiin/Tsumiki/compare/v2.9.0...v2.10.0) (2025-12-10)
 
