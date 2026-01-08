@@ -348,6 +348,47 @@ def convert_bytes(
 
 
 # Function to check if the current time is between sunrise and sunset
+def _normalize_time_string(time_str: str) -> str:
+    """Normalize time strings by removing extra metadata and duplicates."""
+    normalized = str(time_str or "").strip()
+    if not normalized:
+        return ""
+
+    if "T" in normalized:
+        normalized = normalized.split("T")[-1]
+
+    normalized = re.sub(r"[+-]\d{2}:\d{2}$", "", normalized)
+    normalized = normalized.rstrip("Z")
+    normalized = normalized.replace("\xa0", " ")
+    normalized = " ".join(normalized.split())
+    normalized = normalized.upper()
+
+    for period in ("AM", "PM"):
+        match = re.search(rf"\b{period}\b", normalized)
+        if match:
+            normalized = normalized[: match.end()]
+            break
+
+    normalized = re.sub(r"(\d)(AM|PM)$", r"\1 \2", normalized)
+    return normalized
+
+
+def _parse_time_string(value: str, fmt: str) -> datetime:
+    """Try to parse a time string using the provided format and common fallbacks."""
+    normalized = _normalize_time_string(value)
+    if not normalized:
+        raise ValueError(f"empty time string: {value!r}")
+
+    fallback_formats = ("%H:%M", "%H:%M:%S", "%I:%M%p", "%I %p")
+    for fmt_option in (fmt, *fallback_formats):
+        try:
+            return datetime.strptime(normalized, fmt_option)
+        except ValueError:
+            continue
+
+    raise ValueError(f"unable to parse time string: {value!r}")
+
+
 def check_if_day(
     sunrise_time,
     sunset_time,
@@ -357,9 +398,13 @@ def check_if_day(
     if current_time is None:
         current_time = datetime.now().strftime(time_format)
 
-    current_time_obj = datetime.strptime(current_time, time_format)
-    sunrise_time_obj = datetime.strptime(sunrise_time, time_format)
-    sunset_time_obj = datetime.strptime(sunset_time, time_format)
+    try:
+        current_time_obj = _parse_time_string(current_time, time_format)
+        sunrise_time_obj = _parse_time_string(sunrise_time, time_format)
+        sunset_time_obj = _parse_time_string(sunset_time, time_format)
+    except ValueError as exc:
+        logger.warning("[Weather] Failed to parse time string: %s", exc)
+        return False
 
     # Compare current time with sunrise and sunset
     if sunrise_time_obj <= sunset_time_obj:

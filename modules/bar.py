@@ -7,7 +7,7 @@ from fabric.widgets.centerbox import CenterBox
 from fabric.widgets.eventbox import EventBox
 from fabric.widgets.revealer import Revealer
 from fabric.widgets.x11 import X11Window as Window
-from gi.repository import GLib
+from gi.repository import Gdk, GLib
 
 from utils.constants import ASSETS_DIR
 from utils.widget_settings import BarConfig
@@ -124,6 +124,8 @@ LAZY_WIDGETS_LIST = {
 
 class StatusBar(Window):
     """A widget to display the status bar panel."""
+
+    _monitor_util = None
 
     def __init__(self, config: BarConfig, **kwargs):
         # Use lazy widget loading - classes are imported on first use
@@ -287,27 +289,46 @@ class StatusBar(Window):
         for bar in bars:
             app.add_window(bar)
 
-        if multi_monitor:
+        if multi_monitor and StatusBar._monitor_util is not None:
             StatusBar._setup_hotplug(app, config, bars)
 
         return bars
 
     @staticmethod
     def _create_multi_monitor_bars(config: BarConfig):
-        from utils.monitors import HyprlandWithMonitors
+        try:
+            from fabric.hyprland.service import HyprlandSocketNotFoundError
+        except ImportError:
+            HyprlandSocketNotFoundError = RuntimeError
 
-        monitor_util = HyprlandWithMonitors()
-        monitor_names = monitor_util.get_monitor_names()
+        monitor_ids: list[int] = []
+        StatusBar._monitor_util = None
 
-        if not monitor_names:
-            return [StatusBar(config)]
+        try:
+            from utils.monitors import HyprlandWithMonitors
 
-        bars = []
-        for monitor_name in monitor_names:
-            monitor_id = monitor_util.get_gdk_monitor_id_from_name(monitor_name)
-            if monitor_id is not None:
-                bars.append(StatusBar(config, monitor=monitor_id))
+            monitor_util = HyprlandWithMonitors()
+            StatusBar._monitor_util = monitor_util
+            monitor_names = monitor_util.get_monitor_names()
 
+            for monitor_name in monitor_names:
+                monitor_id = monitor_util.get_gdk_monitor_id_from_name(monitor_name)
+                if monitor_id is not None:
+                    monitor_ids.append(monitor_id)
+        except HyprlandSocketNotFoundError as exc:
+            logger.warning("[Bar] Hyprland unavailable: %s", exc)
+        except Exception as exc:  # pragma: no cover - best-effort multi-monitor support
+            logger.warning("[Bar] Failed to initialize Hyprland monitors: %s", exc)
+
+        if not monitor_ids:
+            display = Gdk.Display.get_default()
+            if display:
+                StatusBar._monitor_util = None
+                monitor_ids = list(range(display.get_n_monitors()))
+
+        bars = [
+            StatusBar(config, monitor=monitor_id) for monitor_id in monitor_ids
+        ]
         return bars if bars else [StatusBar(config)]
 
     @staticmethod

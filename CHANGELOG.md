@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased] (2026-01-07 21:19:07 -03)
+
+### 🐛 Bug Fixes
+
+- Keep Fabric audio/OSD widgets alive when `libcvc` is absent by logging once and supplying a safe stub instead of crashing (`services/__init__.py`), so the bar starts without the dependency.
+- Guard Hyprland monitor helpers so missing sockets fall back to the GDK monitor list and Wnck `force_update()` calls no longer reenter (`modules/bar.py`, `services/window_manager.py`), letting i3 sessions create bars safely.
+- Harden UI helpers (popover positioning, button cursors, weather sunrise parsing) against edge cases so mouse interactions and time calculations no longer throw runtime errors (`shared/popover.py`, `shared/widget_container.py`, `utils/functions.py`).
+
 ## [2.10.0](https://github.com/rubiin/Tsumiki/compare/v2.9.0...v2.10.0) (2025-12-10)
 
 

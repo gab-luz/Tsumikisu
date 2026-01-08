@@ -166,7 +166,9 @@ class Popover(Widget):
         monitor_at_window = screen.get_monitor_at_window(
             self._point_to.get_window()
         )
-        monitor_geometry = monitor_at_window.get_geometry()
+        if monitor_at_window < 0:
+            monitor_at_window = 0
+        monitor_geometry = screen.get_monitor_geometry(monitor_at_window)
 
         x = (
             widget_allocation.x

@@ -4,11 +4,65 @@ Services are initialized on first access, not at import time.
 This avoids establishing D-Bus connections until they're actually needed.
 """
 
+from typing import Dict
+
+import logging
+
+_logger = logging.getLogger(__name__)
+
+
+class _NullAudioService:
+    """Fallback stub when the Cvc bindings cannot be loaded."""
+
+    speaker = None
+    microphone = None
+    speakers: tuple = ()
+    microphones: tuple = ()
+    applications: tuple = ()
+    recorders: tuple = ()
+    max_volume = 100
+
+    def connect(self, *args, **kwargs):
+        return 0
+
+    def disconnect(self, *args, **kwargs):
+        return 0
+
+
+_NULL_AUDIO_SERVICE = _NullAudioService()
+_services_cache: Dict[str, object] = {}
+_audio_unavailable_logged = False
+
+
+def _log_audio_unavailable():
+    global _audio_unavailable_logged
+    if not _audio_unavailable_logged:
+        _audio_unavailable_logged = True
+        _logger.warning(
+            "Fabric audio service disabled because the Cvc bindings are missing."
+        )
+
+
+def _get_service(name: str, factory):
+    """Lazy-load a service on first access."""
+    if name not in _services_cache:
+        _services_cache[name] = factory()
+    return _services_cache[name]
+
+
 def get_audio_service():
     """Get the audio service (lazy-loaded)."""
-    from fabric.audio import Audio
-
-    return _get_service("audio", Audio)
+    try:
+        from fabric.audio import Audio
+        return _get_service("audio", Audio)
+    except ImportError:
+        _log_audio_unavailable()
+        return _NULL_AUDIO_SERVICE
+    except Exception as exc:
+        if exc.__class__.__name__ == "CvcImportError":
+            _log_audio_unavailable()
+            return _NULL_AUDIO_SERVICE
+        raise
 
 
 def get_notification_service():

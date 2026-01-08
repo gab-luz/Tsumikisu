@@ -36,6 +36,7 @@ class WindowManagerService(SingletonService):
         self.is_wayland = bool(os.environ.get("WAYLAND_DISPLAY"))
         self.is_x11 = not self.is_wayland and bool(os.environ.get("DISPLAY"))
         self._wnck_screen = None
+        self._force_update_in_progress = False
 
         if self.is_x11:
             if Wnck is None:
@@ -51,23 +52,43 @@ class WindowManagerService(SingletonService):
         if self._wnck_screen is None:
             return False
 
-        self._wnck_screen.force_update()
-        bulk_connect(
-            self._wnck_screen,
-            {
-                "active-workspace-changed": self._notify_workspaces_changed,
-                "workspace-added": self._notify_workspaces_changed,
-                "workspace-removed": self._notify_workspaces_changed,
-                "window-opened": self._notify_windows_changed,
-                "window-closed": self._notify_windows_changed,
-                "window-marked-urgent": self._notify_windows_changed,
-                "window-unmarked-urgent": self._notify_windows_changed,
-            },
-        )
+        self._maybe_force_update()
+
+        for signal_name, handler in {
+            "active-workspace-changed": self._notify_workspaces_changed,
+            "workspace-added": self._notify_workspaces_changed,
+            "workspace-removed": self._notify_workspaces_changed,
+            "window-opened": self._notify_windows_changed,
+            "window-closed": self._notify_windows_changed,
+            "window-marked-urgent": self._notify_windows_changed,
+            "window-unmarked-urgent": self._notify_windows_changed,
+        }.items():
+            try:
+                self._wnck_screen.connect(signal_name, handler)
+            except TypeError:
+                logger.warning(
+                    "[WindowManager] Wnck signal '%s' not supported; skipping watcher.",
+                    signal_name,
+                )
 
         self.emit("workspaces-changed")
         self.emit("windows-changed")
         return False
+
+    def _maybe_force_update(self) -> None:
+        """Safely update Wnck without reentering its update_client_list."""
+        if (
+            self._wnck_screen is None
+            or self._force_update_in_progress
+            or not self.display
+        ):
+            return
+
+        self._force_update_in_progress = True
+        try:
+            self._wnck_screen.force_update()
+        finally:
+            self._force_update_in_progress = False
 
     def _notify_windows_changed(self, *_: Any) -> None:
         self.emit("windows-changed")
@@ -84,7 +105,7 @@ class WindowManagerService(SingletonService):
         if not self._wnck_ready():
             return []
 
-        self._wnck_screen.force_update()
+        self._maybe_force_update()
         workspaces = []
         windows = self._wnck_screen.get_windows()
         active_workspace = self._wnck_screen.get_active_workspace()
@@ -107,7 +128,7 @@ class WindowManagerService(SingletonService):
         if not self._wnck_ready():
             return []
 
-        self._wnck_screen.force_update()
+        self._maybe_force_update()
         windows = []
         for window in self._wnck_screen.get_windows():
             if window.is_skip_tasklist():
