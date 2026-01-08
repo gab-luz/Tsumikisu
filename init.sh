@@ -349,10 +349,16 @@ install_i3_config() {
 	local i3_config_dir="$HOME/.config/i3"
 	mkdir -p "$i3_config_dir"
 	local target_conf
-	target_conf=$(realpath -m "$i3_config_dir/tsumikisu.conf")
+	target_conf=$(realpath -m "$i3_config_dir/config")
 	local template="$INSTALL_DIR/configs/i3/tsumikisu.conf"
 
-	log_info "🧩 Writing the Tsumikisu i3 helper config..."
+	log_info "🧩 Installing the Tsumikisu i3 config to $target_conf..."
+
+	if [ -f "$target_conf" ]; then
+		local backup="${target_conf}.bak.$(date +%Y%m%d%H%M%S)"
+		mv "$target_conf" "$backup"
+		log_info "🗄️  Backed up existing i3 config to $backup"
+	fi
 
 	python3 - "$INSTALL_DIR" "$target_conf" <<PY
 import sys
@@ -372,14 +378,7 @@ for key, value in replacements.items():
 target.write_text(text)
 PY
 
-	local main_config="$i3_config_dir/config"
-	touch "$main_config"
-	local include_line="include $target_conf"
-	if ! grep -Fxq "$include_line" "$main_config"; then
-		printf "\n# Tsumikisu integration\n%s\n" "$include_line" >>"$main_config"
-	fi
-
-	log_success "✅ i3 helpers installed at $target_conf"
+	log_success "✅ i3 config deployed at $target_conf"
 }
 
 usage() {
