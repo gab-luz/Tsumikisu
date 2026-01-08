@@ -403,11 +403,6 @@ class QuickSettingsButtonWidget(ButtonWidget):
         self.panel_icon_size = 16
 
         self.audio_service = audio_service
-
-        self.network_service = NetworkService()
-
-        self.brightness_service = BrightnessService()
-
         bulk_connect(
             self.audio_service,
             {

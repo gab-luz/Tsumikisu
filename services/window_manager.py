@@ -86,14 +86,17 @@ class WindowManagerService(SingletonService):
 
         self._wnck_screen.force_update()
         workspaces = []
+        windows = self._wnck_screen.get_windows()
+        active_workspace = self._wnck_screen.get_active_workspace()
         for workspace in self._wnck_screen.get_workspaces():
             workspace_id = workspace.get_number() + 1
+            occupied = any(w.get_workspace() == workspace for w in windows)
             workspaces.append(
                 {
                     "id": workspace_id,
                     "name": workspace.get_name() or str(workspace_id),
-                    "occupied": workspace.get_window_count() > 0,
-                    "active": workspace.is_active(),
+                    "occupied": occupied,
+                    "active": workspace == active_workspace,
                 }
             )
         return workspaces

@@ -1,5 +1,10 @@
 import re
+import os
+import gi
 
+gi.require_version("Wnck", "3.0")
+from gi.repository import Wnck
+from fabric.widgets.label import Label
 from fabric.hyprland.widgets import HyprlandActiveWindow as ActiveWindow
 from fabric.utils import FormattedString, logger, truncate
 
@@ -25,18 +30,32 @@ class WindowTitleWidget(ButtonWidget):
 
     def __init__(self, **kwargs):
         super().__init__(name="window_title", **kwargs)
+        self.is_wayland = bool(os.environ.get("WAYLAND_DISPLAY"))
 
-        # Create an ActiveWindow widget to track the active window
-        self.active_window = ActiveWindow(
-            name="window",
-            formatter=FormattedString(
-                "{ get_title(win_title, win_class) }",
-                get_title=self._get_title,
-            ),
-        )
+        if self.is_wayland:
+            # Create an ActiveWindow widget to track the active window
+            self.active_window = ActiveWindow(
+                name="window",
+                formatter=FormattedString(
+                    "{ get_title(win_title, win_class) }",
+                    get_title=self._get_title,
+                ),
+            )
+            # Add the ActiveWindow widget as a child
+            self.container_box.children = self.active_window
+        else:
+            self.label = Label()
+            self.container_box.add(self.label)
+            screen = Wnck.Screen.get_default()
+            screen.connect("active-window-changed", self.on_active_window_changed)
+            self.on_active_window_changed(screen, None)
 
-        # Add the ActiveWindow widget as a child
-        self.container_box.children = self.active_window
+    def on_active_window_changed(self, screen, _):
+        active_window = screen.get_active_window()
+        if active_window:
+            self.label.set_text(active_window.get_name())
+        else:
+            self.label.set_text("")
 
     def _get_title(self, win_title: str, win_class: str):
         mappings_enabled = self.config.get("mappings", True)

@@ -184,6 +184,70 @@ EOF
 	deactivate
 }
 
+install_libcvc() {
+	log_info "🔧 Checking if libcvc is installed..."
+	if ls /usr/lib/girepository-1.0/Cvc-1.0.typelib 1>/dev/null 2>&1; then
+		log_success "✅ libcvc is already installed."
+		return
+	fi
+
+	log_info "ℹ️  libcvc not found. Installing..."
+
+	local build_dir="ignore_me_libcvc_build"
+	local cinnamon_git="https://github.com/linuxmint/cinnamon-desktop"
+	local cinnamon_git_name="cinnamon-desktop"
+	local cwd
+	cwd=$(pwd)
+
+	mkdir -p "$build_dir"
+	cd "$build_dir" || exit 1
+	git clone "$cinnamon_git"
+	cd "$cinnamon_git_name" || exit 1
+
+	cat >meson.build.patch <<'EOF'
+diff --git a/meson.build b/meson.build
+index f0bfceb..e089432 100644
+--- a/meson.build
++++ b/meson.build
+@@ -110,11 +110,7 @@ configure_file(
+   configuration: conf
+ )
+ 
+-subdir('install-scripts')
+-subdir('po')
+-subdir('libcinnamon-desktop')
+ subdir('libcvc')
+-subdir('schemas')
+ 
+ 
+ pnp_message = '@0@: @1@'.format(
+EOF
+
+	patch meson.build meson.build.patch
+
+	meson build
+	cd build || exit 1
+	ninja
+
+	if ls libcvc/*.gir 1>/dev/null 2>&1; then
+		log_info "✅ gir files got generated, proceeding to install"
+	else
+		log_error "❌ gir files not found, check meson logs"
+		exit 1
+	fi
+
+	meson install
+	cd libcvc || exit 1
+	sudo cp -r libcvc.s* /usr/lib/
+	sudo cp Cvc-1.0.typelib /usr/lib/girepository-1.0/
+	sudo cp Cvc-1.0.gir /usr/share/gir-1.0/
+
+	cd "$cwd" || exit 1
+	rm -rf "$build_dir"
+
+	log_success "🎉 libcvc installed successfully."
+}
+
 install_packages() {
 
 	# Fun ASCII stays untouched 👍
@@ -229,6 +293,9 @@ install_packages() {
 		python-requests
 		satty
 		nvtop
+		meson
+		ninja
+		patch
 	)
 
 	# Install packages from AUR using yay
@@ -267,6 +334,8 @@ install_packages() {
 		log_error "❌ Failed to install some AUR dependencies."
 		exit 1
 	}
+
+	install_libcvc
 
 	log_success "🎉 System packages installed successfully."
 }

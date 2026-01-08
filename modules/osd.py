@@ -125,19 +125,14 @@ class AudioOSDContainer(GenericOSDContainer):
             **kwargs,
         )
         self.audio_service = audio_service
-
-        self.previous_volume = None
-        self.previous_muted = None
-
-        self.config = config
-
-        bulk_connect(
-            self.audio_service,
-            {
-                "notify::speaker": self.on_speaker_changed,
-                "changed": self.check_mute,
-            },
-        )
+        if self.audio_service:
+            bulk_connect(
+                self.audio_service,
+                {
+                    "notify::speaker": self.on_speaker_changed,
+                    "changed": self.check_mute,
+                },
+            )
 
     @cooldown(0.1)
     def check_mute(self, *_):
@@ -197,19 +192,14 @@ class MicrophoneOSDContainer(GenericOSDContainer):
             **kwargs,
         )
         self.audio_service = audio_service
-
-        self.previous_volume = None
-        self.previous_muted = None
-
-        self.config = config
-
-        bulk_connect(
-            self.audio_service,
-            {
-                "notify::microphone": self.on_microphone_changed,
-                "changed": self.check_mute,
-            },
-        )
+        if self.audio_service:
+            bulk_connect(
+                self.audio_service,
+                {
+                    "notify::microphone": self.on_microphone_changed,
+                    "changed": self.check_mute,
+                },
+            )
 
     @cooldown(0.1)
     def check_mute(self, *_):
