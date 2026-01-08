@@ -411,9 +411,19 @@ class QuickSettingsButtonWidget(ButtonWidget):
             },
         )
 
-        self.brightness_service.connect("brightness_changed", self.update_brightness)
+        try:
+            self.brightness_service = BrightnessService()
+            self.brightness_service.connect("brightness_changed", self.update_brightness)
+        except Exception as exc:  # pragma: no cover - service might fail on headless systems
+            logger.warning("[QuickSettings] Brightness service unavailable: %s", exc)
+            self.brightness_service = None
 
-        self.network_service.connect("device-ready", self._get_network_icon)
+        try:
+            self.network_service = NetworkService()
+            self.network_service.connect("device-ready", self._get_network_icon)
+        except Exception as exc:  # pragma: no cover - guard missing backends
+            logger.warning("[QuickSettings] Network service unavailable: %s", exc)
+            self.network_service = None
 
         self.popup = None
 
@@ -466,6 +476,8 @@ class QuickSettingsButtonWidget(ButtonWidget):
 
     def _get_network_icon(self, *_):
         # Check if the network service is ready
+        if not self.network_service:
+            return
         if self.network_service.primary_device == "wifi":
             wifi = self.network_service.wifi_device
             if wifi:
@@ -516,6 +528,8 @@ class QuickSettingsButtonWidget(ButtonWidget):
 
     def update_brightness(self, *_):
         """Update the brightness icon."""
+        if not self.brightness_service:
+            return
         try:
             normalized_brightness = self.brightness_service.screen_brightness_percentage
             icon_info = get_brightness_icon_name(normalized_brightness)["icon"]
